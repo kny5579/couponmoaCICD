@@ -1,0 +1,62 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches: [ dev ]  # dev 브랜치에 push 될 때 실행됨. 이후 main으로 수정해야함
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Create application.yml and application-local.properties
+        run: |
+          mkdir -p src/main/resources
+
+          cat <<EOF > src/main/resources/application.yml
+          spring:
+            mail:
+              host: smtp.gmail.com
+              port: 587
+              username: ${{ secrets.MAIL_USERNAME }}
+              password: ${{ secrets.MAIL_PASSWORD }}
+              properties:
+                mail.smtp.auth: true
+                mail.smtp.starttls.enable: true
+          EOF
+
+          cat <<EOF > src/main/resources/application-local.properties
+          spring.datasource.url=${{ secrets.DB_URL }}
+          spring.datasource.username=${{ secrets.DB_USERNAME }}
+          spring.datasource.password=${{ secrets.DB_PASSWORD }}
+          jwt.secret=${{ secrets.JWT_SECRET }}
+          EOF
+
+      - name: Build with Gradle
+        run: ./gradlew clean build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/couponmoa .
+          docker push ${{ secrets.DOCKER_USERNAME }}/couponmoa
