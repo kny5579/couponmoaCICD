@@ -21,28 +21,11 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x ./gradlew
 
-      - name: Create application.yml and application-local.properties
-        run: |
-          mkdir -p src/main/resources
+      - name: Restore application.yml
+        run: echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
 
-          cat <<EOF > src/main/resources/application.yml
-          spring:
-            mail:
-              host: smtp.gmail.com
-              port: 587
-              username: ${{ secrets.MAIL_USERNAME }}
-              password: ${{ secrets.MAIL_PASSWORD }}
-              properties:
-                mail.smtp.auth: true
-                mail.smtp.starttls.enable: true
-          EOF
-
-          cat <<EOF > src/main/resources/application-local.properties
-          spring.datasource.url=${{ secrets.DB_URL }}
-          spring.datasource.username=${{ secrets.DB_USERNAME }}
-          spring.datasource.password=${{ secrets.DB_PASSWORD }}
-          jwt.secret=${{ secrets.JWT_SECRET }}
-          EOF
+      - name: Restore application-local.properties
+        run: echo "${{ secrets.APPLICATION_LOCAL_PROPERTIES }}" > src/main/resources/application-local.properties
 
       - name: Build with Gradle
         run: ./gradlew clean build
