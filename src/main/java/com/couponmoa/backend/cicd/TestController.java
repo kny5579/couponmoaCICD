@@ -10,7 +10,7 @@ public class TestController {
 
     @GetMapping("/")
     public String home() {
-        return "test CICD Docker version: " + version;
+        return "CICD Docker version: " + version;
     }
 
 }
