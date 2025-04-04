@@ -2,11 +2,27 @@ name: Build and Deploy
 
 on:
   push:
-    branches: [ dev ]  # dev 브랜치에 push 될 때 실행됨. 이후 main으로 수정해야함
+    branches: [ dev ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: couponmoa
+          MYSQL_USER: user
+          MYSQL_PASSWORD: password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
     steps:
       - name: Checkout source code
