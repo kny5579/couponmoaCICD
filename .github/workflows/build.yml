@@ -36,6 +36,7 @@ jobs:
           mkdir -p deploy
           cp ./appspec.yml ./deploy/
           cp ./Dockerfile ./deploy/
+          cp ./docker-compose.yml ./deploy/
           cp ./build/libs/*.jar ./deploy/
           cp ./deploy.sh ./deploy/
           zip -r -qq -j ./deploy.zip ./deploy
