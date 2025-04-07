@@ -8,6 +8,7 @@ import org.springframework.data.web.config.EnableSpringDataWebSupport;
 @EnableSpringDataWebSupport(pageSerializationMode = EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO)
 public class CouponmoaApplication {
 
+
     public static void main(String[] args) {
         SpringApplication.run(CouponmoaApplication.class, args);
     }
