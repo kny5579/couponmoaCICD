@@ -41,6 +41,23 @@ jobs:
           cp ./deploy.sh ./deploy/
           zip -r -qq -j ./deploy.zip ./deploy
 
+      # Docker Hub 로그인
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Docker 이미지 빌드 및 푸시
+      - name: Build Docker image
+        run: |
+          docker build -t wonderful00101/couponmoa:${{ github.sha }} .
+
+      - name: Push Docker image to Docker Hub
+        run: |
+          docker push wonderful00101/couponmoa:${{ github.sha }}
+
+      # AWS 자격 증명 설정
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -48,12 +65,14 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+      # S3에 배포 파일 업로드
       - name: Upload to S3
         run: |
           aws s3 cp \
             ./deploy.zip s3://couponmoa-test1/deploy.zip \
             --region ap-northeast-2
 
+      # CodeDeploy로 배포
       - name: Deploy with CodeDeploy
         run: |
           aws deploy create-deployment \
@@ -62,3 +81,24 @@ jobs:
             --deployment-config-name CodeDeployDefault.AllAtOnce \
             --s3-location bucket=couponmoa-test1,bundleType=zip,key=deploy.zip
 
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      # EC2에 SSH로 접속하여 Docker 이미지 다운로드 및 실행
+      - name: Deploy Docker image to EC2
+        uses: appleboy/ssh-action@v0.1.1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # EC2에서 Docker 이미지 풀
+            docker pull wonderful00101/couponmoa:${{ github.sha }}
+            
+            # 이전 컨테이너가 실행 중이면 중지 및 제거
+            docker stop couponmoa || true
+            docker rm couponmoa || true
+            
+            # 새 컨테이너 실행
+            docker run -d --name couponmoa -p 80:80 wonderful00101/couponmoa:${{ github.sha }}
