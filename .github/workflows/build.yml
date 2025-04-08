@@ -24,7 +24,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Restore application.yml
-        run: echo "${{ secrets.APPLICATION_YML }}" > src/main/resources/application.yml
+        run: echo "${{ secrets.APPLICATION_LOCAL_YML }}" > src/main/resources/application-local.yml
 
       - name: Restore application-local.properties
         run: echo "${{ secrets.APPLICATION_LOCAL_PROPERTIES }}" > src/main/resources/application-local.properties
